@@ -10,7 +10,7 @@ export default async function Home() {
       <FormCreate />
       <div className="mt-12">
         <h1 className="text-2xl font-bold tracking-tight">All Stories</h1>
-        <div className="mt-6 space-y-12">
+        <div className="mt-6 space-y-4">
           {projects.map((project) => {
             if (project.status === "completed") {
               return (
