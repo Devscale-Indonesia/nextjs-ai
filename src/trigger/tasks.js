@@ -1,4 +1,5 @@
 import { openai } from "@/utils/openai";
+import { prisma } from "@/utils/prisma";
 import { s3Client } from "@/utils/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { logger, task } from "@trigger.dev/sdk/v3";
@@ -8,6 +9,7 @@ export const generateStoryTask = task({
   maxDuration: 300,
   run: async (payload, { ctx }) => {
     logger.log("Generating story...", { payload, ctx });
+
     const res = await openai.responses.parse({
       model: "gpt-4.1",
       instructions: "You are a story teller. Write a short story about the following:",
@@ -21,7 +23,7 @@ export const generateStoryTask = task({
             properties: {
               coverImagePrompt: {
                 type: "string",
-                description: "Prompt to generate cover image for the story",
+                description: "Prompt to generate cover image for the story, should be in kids comic crayon style",
               },
               title: {
                 type: "string",
@@ -49,7 +51,7 @@ export const generateStoryTask = task({
     });
 
     const folder = "images";
-    const key = ctx.task.id + "-" + Date.now() + ".png";
+    const key = payload.id + ".png";
     const buffer = Buffer.from(image.data[0].b64_json, "base64");
     const path = `https://pub-15b1527f05fc4c23ad7da0b7f532941c.r2.dev/batch9/images/${key}`;
 
@@ -68,6 +70,18 @@ export const generateStoryTask = task({
     } catch (error) {
       console.log(error);
     }
+
+    await prisma.project.update({
+      where: {
+        id: payload.id,
+      },
+      data: {
+        title: res.output_parsed.title,
+        stories: JSON.stringify(res.output_parsed.content),
+        coverUrl: path,
+        status: "completed",
+      },
+    });
 
     return {
       success: true,
