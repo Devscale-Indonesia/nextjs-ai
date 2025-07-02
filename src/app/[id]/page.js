@@ -2,6 +2,16 @@ import { prisma } from "@/utils/prisma";
 import Link from "next/link";
 import React from "react";
 
+export async function generateStaticParams() {
+  const projects = await prisma.project.findMany();
+  return projects.map((project) => ({
+    id: project.id,
+  }));
+}
+
+export const revalidate = 10;
+export const dynamicParams = true;
+
 export default async function Page({ params }) {
   const { id } = await params;
 
