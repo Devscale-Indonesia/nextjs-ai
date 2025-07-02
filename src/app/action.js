@@ -15,6 +15,5 @@ export async function generateStory(_, formData) {
 
   revalidatePath("/");
 
-  const story = await generateStoryTask.trigger({ prompt, id: project.id });
-  return story;
+  // Call background task
 }
